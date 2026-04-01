@@ -142,3 +142,56 @@ terraform apply
 - Step 9: View your app in your browser
 
 Go to http://localhost:8080 
+
+## ADDITIONS I MADE IN THIS PROJECT
+I made my static webpage to be more visually pleasing using an external css
+
+## ERRORS I RAN INTO
+- My Docker was outdated, had to update.
+- I typed in : 
+```
+docker build -t priskah26/my-webapp:v1                                
+
+Received this error: 
+
+ERROR: docker: 'docker buildx build' requires 1 argument
+Usage:  docker buildx build [OPTIONS] PATH | URL | -
+Run 'docker buildx build --help' for more information
+
+So, I corrected it to: docker build -t priskah26/my-webapp:v1 .     
+```
+Note that The dot (.) symbolizing the exact folder I want the docker to build in.
+
+- I did `terraform init`, then `terraform plan`
+
+And this error showed: 
+```
+╷
+│ Error: No configuration files
+│
+│ Plan requires configuration to be present. Planning without a configuration would mark everything for destruction, which is
+│ normally not what is desired. If you would like to destroy everything, run plan with the -destroy option. Otherwise, create a
+│ Terraform configuration file (.tf file) and try again.
+╵
+```
+I forgot to go into the terraform directory to run those commands and I did so; `cd terraform`.
+
+- I did `terraform apply`
+And this error showed:
+```
+╷
+│ Error: Unable to read Docker image into resource: unable to pull image priskah26/static-my-webapp:v1: error pulling image priskah26/static-my-webapp:v1: Error response from daemon: pull access denied for priskah26/static-my-webapp, repository does not exist or may require 'docker login'
+│
+│   with docker_image.my_webapp_image,
+│   on main.tf line 15, in resource "docker_image" "my_webapp_image":
+│   15: resource "docker_image" "my_webapp_image" {
+│
+╵
+```
+The resource name in my terraform/main.tf was different from the name I pushed. So, I made sure they tallied.
+
+- When I had added my external index.css, it didn’t reflect on my browser because I forgot to add it in my dockerfile build and final stages in my VS Code. I thought I had it done and went through the process of `docker build` - `docker push` - `terraform init` - `terraform plan` - `terraform apply` and the css syling didn’t display. 
+
+- So, I went back to docker to inspect and tried to run my docker locally with `docker inspect (container ID)`, `docker run -d --name [container-name][image-name]`. I also did `docker ps` and noticed that I had no properly defined ports, so I gracefully killed my container and other containers that were running on 8080:80 ports. My container was to run on 8080:80 ports but two containers can't share one port. Even though I ran the same app, and I mapped Terraform and Docker to different Host Ports (8080 and 8091), they do not fight for the same entrance to my computer. As long as they both point to Internal Port 80 inside their own boxes, they will both serve my webpage perfectly. When I was done, I still did the process of `docker build` - `docker push` - `terraform init` - `terraform plan` - `terraform apply` and the css still didn’t display!!!!
+
+- I forgot to update my docker image to a new version!!! Because, Docker images are immutable (they cannot be changed once they are built), you must build a new version (like v2) to update your changes and replace the old v1 container.    So, I did just that, I built and ran a new container with my chosen ports and the web image v2, then pushed the container. I also remembered to edit that change in my terraform/main.tf file under the resource name. Then I did the process again; `docker build` - `docker push` - `terraform init` - `terraform plan` - `terraform apply` and it worked!!!
